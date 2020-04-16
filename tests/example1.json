@@ -1,7 +1,7 @@
 {
     "tests":[
         {
-            "scenario":"sample test 1",
+            "scenario":"shoudld test dummy rest api",
             "url":"http://dummy.restapiexample.com/api/v1/employees",
             "method":"GET",
             "body": [{
@@ -40,7 +40,7 @@
                 }
         },
         {
-          "scenario":"sample test 2",
+          "scenario":"should return json response",
           "url":"https://jsonplaceholder.typicode.com/todos/11",
           "method":"GET",
           "expectedStatusCode": 200,
@@ -52,7 +52,7 @@
           }
         },
         {
-            "scenario":"sample test 3",
+            "scenario":"should retunr json response form GraphQl API",
             "url":"http://localhost:8080/query",
             "type": "graphql",
             "ignore":true,
@@ -85,7 +85,7 @@
               }
         },
         {
-          "scenario":"sample test 4",
+          "scenario":"shoudl return data from todo api",
           "url":"https://jsonplaceholder.typicode.com/todos/11",
           "method":"GET",
           "ignore":false,

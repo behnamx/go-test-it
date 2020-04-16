@@ -30,8 +30,41 @@ func InitHTTPClient(c remoteClient) {
 	client = c
 }
 
-func doCall(req *http.Request) ([]byte, int) {
+func doCall(test model.TestScenario) ([]byte, int) {
 
+	var (
+		reqBody     []byte
+		err         error
+		requestBody io.Reader
+		body        interface{}
+	)
+
+	if test.Body != nil {
+		switch test.Type {
+		case GraphQL:
+			bodyMap := make(map[string]interface{})
+			bodyMap["query"] = test.Body
+			body = bodyMap
+		default:
+			body = test.Body
+		}
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			logrus.Error(err)
+		}
+
+		requestBody = strings.NewReader(string(reqBody))
+	}
+
+	req, err := http.NewRequest(test.Method, test.URL, requestBody)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	if test.Header.Authorization != "" {
+		req.Header.Add("authorization", test.Header.Authorization)
+	}
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
 		logrus.Error(err)
@@ -47,13 +80,10 @@ func doCall(req *http.Request) ([]byte, int) {
 }
 
 // MakeHTTPCall - performs an http call
-func MakeHTTPCall(scenarios []model.TestScenario) (map[string]bool, int) {
+func MakeHTTPCall(scenarios []model.TestScenario, scenarioName string) (map[string]bool, int) {
 	var (
-		reqBody     []byte
-		err         error
-		requestBody io.Reader
-		body        interface{}
-		ignored     int
+		err     error
+		ignored int
 	)
 
 	finalResult := make(map[string]bool)
@@ -61,6 +91,7 @@ func MakeHTTPCall(scenarios []model.TestScenario) (map[string]bool, int) {
 
 	for _, scenario := range scenarios {
 		if !scenario.Ignore {
+			// add not ignored scenarios to the map and excute that test
 			testScenarios[scenario.Scenario] = scenario
 		} else {
 			logrus.Info(fmt.Sprintf("Test %v Ignored", scenario.Scenario))
@@ -69,35 +100,10 @@ func MakeHTTPCall(scenarios []model.TestScenario) (map[string]bool, int) {
 	}
 
 	for _, test := range testScenarios {
+
 		result := make(map[string]interface{})
-		if test.Body != nil {
-			switch test.Type {
-			case GraphQL:
-				bodyMap := make(map[string]interface{})
-				bodyMap["query"] = test.Body
-				body = bodyMap
-			default:
-				body = test.Body
-			}
-			reqBody, err = json.Marshal(body)
-			if err != nil {
-				logrus.Error(err)
-			}
 
-			requestBody = strings.NewReader(string(reqBody))
-		}
-
-		req, err := http.NewRequest(test.Method, test.URL, requestBody)
-		if err != nil {
-			logrus.Error(err)
-		}
-
-		if test.Header.Authorization != "" {
-			req.Header.Add("authorization", test.Header.Authorization)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		bodyBytes, statusCode := doCall(req)
+		bodyBytes, statusCode := doCall(test)
 
 		err = json.Unmarshal(bodyBytes, &result)
 		if err != nil {

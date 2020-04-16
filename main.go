@@ -40,11 +40,11 @@ func main() {
 	filePath = flag.String("file-path", "./", "Path to Test Files.")
 	fileName = flag.String("file-name", "", "Name Of Test Files.")
 	scenarioName = flag.String("scenario-name", "all", "Tests a specific scenario.")
-	//uniquePtr := flag.Bool("unique", false, "Measure unique values of a metric.")
 
 	flag.Parse()
 
-	if strings.Contains(*filePath, ".json") {
+	//ability to handle tests in specific file
+	if *filePath != "" && *fileName != "" {
 		handleSpecificFile(*filePath, *fileName)
 		return
 	}
@@ -65,7 +65,7 @@ func main() {
 				if err != nil {
 					logrus.Fatal(err)
 				}
-				result, ignored, err := handleTests(data)
+				result, ignored, err := handleTests(data, *scenarioName)
 				if err != nil {
 					logrus.Fatal(err)
 				}
@@ -78,24 +78,25 @@ func main() {
 }
 
 func handleSpecificFile(path, fileName string) {
+	printFileName(fileName)
 	data, err := ioutil.ReadFile(path + fileName)
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	result, ignored, err := handleTests(data)
+	result, ignored, err := handleTests(data, *scenarioName)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 	utils.FinalResult(fileName, ignored, result)
 }
 
-func handleTests(data []byte) (result map[string]bool, ignored int, err error) {
+func handleTests(data []byte, scenario string) (result map[string]bool, ignored int, err error) {
 	var scenarios model.TestModel
 	err = json.Unmarshal(data, &scenarios)
 	if err != nil {
 		return nil, 0, err
 	}
-	result, ignored = service.MakeHTTPCall(scenarios.Test)
+	result, ignored = service.MakeHTTPCall(scenarios.Test, scenario)
 	return result, ignored, nil
 }
 

@@ -34,6 +34,8 @@ func FinalResult(fileName string, ignored int, result map[string]bool) {
 
 	if failed > 0 {
 		fmt.Printf("Result: %v\n", "FAILED")
+	} else {
+		fmt.Printf("Result: %v\n", "SUCCESS")
 	}
 }
 
